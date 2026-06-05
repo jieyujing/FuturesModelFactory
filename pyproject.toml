@@ -1,0 +1,25 @@
+[project]
+name = "futures-model-factory"
+version = "0.1.0"
+description = "Futures modeling pipeline with Polars-first research contracts."
+requires-python = ">=3.11"
+dependencies = [
+    "polars",
+    "numpy",
+    "pyyaml",
+    "scipy",
+    "pandas",
+    "scikit-learn",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.14",
+]
