@@ -6,7 +6,9 @@ from typing import Any, Literal
 
 import yaml  # type: ignore[import-untyped]
 
-LifecycleStage = Literal["draft", "observation", "candidate", "approved", "deprecated", "rejected"]
+LifecycleStage = Literal[
+    "draft", "observation", "candidate", "approved", "deprecated", "rejected"
+]
 
 _PLACEHOLDER_MARKERS = ("<", ">", "TBD", "TODO", "N/A?")
 _INPUT_GRANULARITIES = {"raw_bars", "minute_aggregates", "factor_table", "mixed"}
@@ -33,7 +35,14 @@ _PROFIT_SOURCE_CATEGORIES = {
 _BASELINE_METRICS = {"incremental_IR", "incremental_Sharpe"}
 _DRIFT_CHECKS = {"PSI", "KS", "reconstruction_error"}
 _DRIFT_ACTIONS = {"downgrade_weight", "deactivate"}
-_LIFECYCLE_STAGES = {"draft", "observation", "candidate", "approved", "deprecated", "rejected"}
+_LIFECYCLE_STAGES = {
+    "draft",
+    "observation",
+    "candidate",
+    "approved",
+    "deprecated",
+    "rejected",
+}
 
 
 @dataclass(frozen=True)
@@ -113,7 +122,9 @@ def load_subsystem_card(path: str | Path) -> SubsystemCard:
     _validate_kill_condition(raw["kill_condition"])
     _validate_drift_monitoring(raw["drift_monitoring"])
     _validate_search_context(raw["search_context"])
-    _validate_compensations(raw["compensations"], raw["interpretability_layers_given_up"])
+    _validate_compensations(
+        raw["compensations"], raw["interpretability_layers_given_up"]
+    )
     output_signals = _validate_output_signals(raw["output_signals"])
     _validate_audit(raw["audit"])
 
@@ -127,7 +138,9 @@ def load_subsystem_card(path: str | Path) -> SubsystemCard:
         mechanism_class=str(raw["mechanism_class"]),
         profit_source_category=str(raw["profit_source_category"]),
         expected_mechanism_sign=str(raw["expected_mechanism_sign"]),
-        scope_conditions={key: list(value) for key, value in raw["scope_conditions"].items()},
+        scope_conditions={
+            key: list(value) for key, value in raw["scope_conditions"].items()
+        },
         baseline_to_beat=dict(raw["baseline_to_beat"]),
         kill_condition=dict(raw["kill_condition"]),
         drift_monitoring=dict(raw["drift_monitoring"]),
@@ -141,7 +154,11 @@ def load_subsystem_card(path: str | Path) -> SubsystemCard:
 def load_subsystem_cards(root: str | Path) -> list[SubsystemCard]:
     """Load all non-template YAML subsystem cards from a registry directory."""
     base = Path(root)
-    return [load_subsystem_card(path) for path in sorted(base.glob("*.yaml")) if not path.name.startswith("_")]
+    return [
+        load_subsystem_card(path)
+        for path in sorted(base.glob("*.yaml"))
+        if not path.name.startswith("_")
+    ]
 
 
 def _reject_placeholders(value: Any, *, path: str = "card") -> None:
@@ -169,14 +186,20 @@ def _reject_placeholders(value: Any, *, path: str = "card") -> None:
 
 def _validate_enums(raw: dict[str, Any]) -> None:
     _require_member(raw["input_granularity"], _INPUT_GRANULARITIES, "input_granularity")
-    _require_member(raw["bottleneck_location"], _BOTTLENECK_LOCATIONS, "bottleneck_location")
+    _require_member(
+        raw["bottleneck_location"], _BOTTLENECK_LOCATIONS, "bottleneck_location"
+    )
     for dimension in raw["escape_dimensions"]:
         _require_member(dimension, _ESCAPE_DIMENSIONS, "escape_dimensions")
     if not {"L1", "L2"}.issubset(set(raw["interpretability_layers_kept"])):
         raise ValueError("subsystem card must keep L1 and L2")
     if "L2" in set(raw["interpretability_layers_given_up"]):
         raise ValueError("subsystem card may not give up L2")
-    _require_member(raw["profit_source_category"], _PROFIT_SOURCE_CATEGORIES, "profit_source_category")
+    _require_member(
+        raw["profit_source_category"],
+        _PROFIT_SOURCE_CATEGORIES,
+        "profit_source_category",
+    )
 
 
 def _validate_scope_conditions(scope: dict[str, Any]) -> None:
@@ -207,8 +230,14 @@ def _validate_drift_monitoring(drift: dict[str, Any]) -> None:
     for key in ("input_distribution_check", "threshold", "action_on_breach"):
         if key not in drift:
             raise ValueError(f"drift_monitoring missing {key}")
-    _require_member(drift["input_distribution_check"], _DRIFT_CHECKS, "drift_monitoring.input_distribution_check")
-    _require_member(drift["action_on_breach"], _DRIFT_ACTIONS, "drift_monitoring.action_on_breach")
+    _require_member(
+        drift["input_distribution_check"],
+        _DRIFT_CHECKS,
+        "drift_monitoring.input_distribution_check",
+    )
+    _require_member(
+        drift["action_on_breach"], _DRIFT_ACTIONS, "drift_monitoring.action_on_breach"
+    )
     _require_number(drift["threshold"], "drift_monitoring.threshold")
 
 
@@ -224,10 +253,18 @@ def _validate_search_context(search: dict[str, Any]) -> None:
             raise ValueError(f"search_context missing {key}")
     if int(search["architectures_considered"]) <= 0:
         raise ValueError("search_context.architectures_considered must be positive")
-    if not isinstance(search["horizons_considered"], list) or not search["horizons_considered"]:
+    if (
+        not isinstance(search["horizons_considered"], list)
+        or not search["horizons_considered"]
+    ):
         raise ValueError("search_context.horizons_considered must be a non-empty list")
-    if not isinstance(search["research_ledger_entries"], list) or not search["research_ledger_entries"]:
-        raise ValueError("search_context.research_ledger_entries must be a non-empty list")
+    if (
+        not isinstance(search["research_ledger_entries"], list)
+        or not search["research_ledger_entries"]
+    ):
+        raise ValueError(
+            "search_context.research_ledger_entries must be a non-empty list"
+        )
 
 
 def _validate_compensations(compensations: dict[str, Any], given_up: list[str]) -> None:
@@ -250,9 +287,17 @@ def _validate_output_signals(signals: list[dict[str, Any]]) -> list[OutputSignal
         if name in names:
             raise ValueError(f"duplicate output signal: {name}")
         if "latent" in name.lower() or "embedding" in name.lower():
-            raise ValueError("output signal names must be semantic, not raw latent vectors")
+            raise ValueError(
+                "output signal names must be semantic, not raw latent vectors"
+            )
         names.add(name)
-        parsed.append(OutputSignalSpec(name=name, range=str(signal["range"]), semantics=str(signal["semantics"])))
+        parsed.append(
+            OutputSignalSpec(
+                name=name,
+                range=str(signal["range"]),
+                semantics=str(signal["semantics"]),
+            )
+        )
     return parsed
 
 

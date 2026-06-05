@@ -1,0 +1,19 @@
+name: futures_smoke
+universe:
+  min_listed_days: 10
+  allow_suspended: false
+label:
+  horizon: 5
+  label_name: forward_return
+backtest:
+  periods_per_year: 252
+cost_model:
+  commission_rate: 0.00003  # Futures typical flat or small bp rate
+  slippage_rate: 0.0002
+
+database:
+  host: ch.jieyujing.eu.org
+  port: 443
+  username: quant
+  password: quantpass
+  database: default

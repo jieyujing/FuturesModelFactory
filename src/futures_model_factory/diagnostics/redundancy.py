@@ -38,10 +38,14 @@ def _library_to_wide(library: pl.DataFrame) -> tuple[pl.DataFrame, list[str]]:
         feature_cols = [col for col in library.columns if col not in {"date", "code"}]
         return library, feature_cols
 
-    raise ValueError("library must be wide with date/code plus factor columns or long with factor/factor_value")
+    raise ValueError(
+        "library must be wide with date/code plus factor columns or long with factor/factor_value"
+    )
 
 
-def _joined_candidate_library(candidate: pl.DataFrame, library: pl.DataFrame) -> tuple[pl.DataFrame, list[str]]:
+def _joined_candidate_library(
+    candidate: pl.DataFrame, library: pl.DataFrame
+) -> tuple[pl.DataFrame, list[str]]:
     required = {"date", "code", "factor_value"}
     if not required.issubset(candidate.columns):
         raise ValueError("candidate must contain date, code, factor_value")
@@ -51,7 +55,9 @@ def _joined_candidate_library(candidate: pl.DataFrame, library: pl.DataFrame) ->
         raise ValueError("library must contain at least one factor column")
 
     joined = (
-        candidate.select("date", "code", pl.col("factor_value").alias("candidate_factor_value"))
+        candidate.select(
+            "date", "code", pl.col("factor_value").alias("candidate_factor_value")
+        )
         .join(wide, on=["date", "code"], how="inner")
         .sort(["date", "code"])
     )
@@ -71,7 +77,9 @@ def factor_redundancy_report(
     Use adversarial_redundancy_score for nonlinear predictability.
     """
     joined, feature_cols = _joined_candidate_library(candidate, library)
-    corr_exprs = [pl.corr("candidate_factor_value", col).alias(col) for col in feature_cols]
+    corr_exprs = [
+        pl.corr("candidate_factor_value", col).alias(col) for col in feature_cols
+    ]
     corr_long = (
         joined.select(corr_exprs)
         .unpivot(variable_name="existing_factor", value_name="correlation")
@@ -80,16 +88,18 @@ def factor_redundancy_report(
     )
 
     if corr_long.is_empty():
-        return pl.DataFrame({
-            "factor": [factor_name],
-            "n": [joined.height],
-            "category": [category],
-            "redundancy_threshold": [_REDUNDANCY_THRESHOLDS[category]],
-            "max_abs_correlation": [None],
-            "mean_abs_correlation": [None],
-            "most_correlated_factor": [None],
-            "is_linearly_redundant": [None],
-        })
+        return pl.DataFrame(
+            {
+                "factor": [factor_name],
+                "n": [joined.height],
+                "category": [category],
+                "redundancy_threshold": [_REDUNDANCY_THRESHOLDS[category]],
+                "max_abs_correlation": [None],
+                "mean_abs_correlation": [None],
+                "most_correlated_factor": [None],
+                "is_linearly_redundant": [None],
+            }
+        )
 
     top = corr_long.sort("abs_correlation", descending=True).head(1)
     summary = corr_long.select(
@@ -99,16 +109,20 @@ def factor_redundancy_report(
     max_corr = summary.item(0, "max_abs_correlation")
     threshold = _REDUNDANCY_THRESHOLDS[category]
 
-    return pl.DataFrame({
-        "factor": [factor_name],
-        "n": [joined.height],
-        "category": [category],
-        "redundancy_threshold": [threshold],
-        "max_abs_correlation": [max_corr],
-        "mean_abs_correlation": [summary.item(0, "mean_abs_correlation")],
-        "most_correlated_factor": [top.item(0, "existing_factor")],
-        "is_linearly_redundant": [bool(max_corr is not None and max_corr >= threshold)],
-    })
+    return pl.DataFrame(
+        {
+            "factor": [factor_name],
+            "n": [joined.height],
+            "category": [category],
+            "redundancy_threshold": [threshold],
+            "max_abs_correlation": [max_corr],
+            "mean_abs_correlation": [summary.item(0, "mean_abs_correlation")],
+            "most_correlated_factor": [top.item(0, "existing_factor")],
+            "is_linearly_redundant": [
+                bool(max_corr is not None and max_corr >= threshold)
+            ],
+        }
+    )
 
 
 def adversarial_redundancy_score(
@@ -132,15 +146,17 @@ def adversarial_redundancy_score(
     joined, feature_cols = _joined_candidate_library(candidate, library)
     clean = joined.filter(pl.col("candidate_factor_value").is_not_null())
     if clean.height < cfg.min_train_rows + cfg.min_test_rows:
-        return pl.DataFrame({
-            "factor": [factor_name],
-            "n_train": [0],
-            "n_test": [0],
-            "category": [cfg.category],
-            "redundancy_threshold": [_REDUNDANCY_THRESHOLDS[cfg.category]],
-            "adversarial_r2": [None],
-            "is_adversarially_redundant": [None],
-        })
+        return pl.DataFrame(
+            {
+                "factor": [factor_name],
+                "n_train": [0],
+                "n_test": [0],
+                "category": [cfg.category],
+                "redundancy_threshold": [_REDUNDANCY_THRESHOLDS[cfg.category]],
+                "adversarial_r2": [None],
+                "is_adversarially_redundant": [None],
+            }
+        )
 
     dates = clean.select("date").unique().sort("date").get_column("date").to_list()
     split_index = max(1, min(len(dates) - 1, int(len(dates) * cfg.train_fraction)))
@@ -149,18 +165,25 @@ def adversarial_redundancy_score(
     test = clean.filter(~pl.col("date").is_in(train_dates))
 
     if train.height < cfg.min_train_rows or test.height < cfg.min_test_rows:
-        return pl.DataFrame({
-            "factor": [factor_name],
-            "n_train": [train.height],
-            "n_test": [test.height],
-            "category": [cfg.category],
-            "redundancy_threshold": [_REDUNDANCY_THRESHOLDS[cfg.category]],
-            "adversarial_r2": [None],
-            "is_adversarially_redundant": [None],
-        })
+        return pl.DataFrame(
+            {
+                "factor": [factor_name],
+                "n_train": [train.height],
+                "n_test": [test.height],
+                "category": [cfg.category],
+                "redundancy_threshold": [_REDUNDANCY_THRESHOLDS[cfg.category]],
+                "adversarial_r2": [None],
+                "is_adversarially_redundant": [None],
+            }
+        )
 
     medians = {col: train.get_column(col).median() for col in feature_cols}
-    fill_exprs = [pl.col(col).fill_null(medians[col] if medians[col] is not None else 0.0).alias(col) for col in feature_cols]
+    fill_exprs = [
+        pl.col(col)
+        .fill_null(medians[col] if medians[col] is not None else 0.0)
+        .alias(col)
+        for col in feature_cols
+    ]
     train = train.with_columns(fill_exprs)
     test = test.with_columns(fill_exprs)
 
@@ -169,18 +192,24 @@ def adversarial_redundancy_score(
     x_test = test.select(feature_cols).to_numpy()
     y_test = test.get_column("candidate_factor_value").to_numpy()
 
-    model = GradientBoostingRegressor(random_state=cfg.random_state, max_depth=2, n_estimators=80, learning_rate=0.05)
+    model = GradientBoostingRegressor(
+        random_state=cfg.random_state, max_depth=2, n_estimators=80, learning_rate=0.05
+    )
     model.fit(x_train, y_train)
     raw_score = float(r2_score(y_test, model.predict(x_test)))
     score: float | None = None if np.isnan(raw_score) else raw_score
     threshold = _REDUNDANCY_THRESHOLDS[cfg.category]
 
-    return pl.DataFrame({
-        "factor": [factor_name],
-        "n_train": [train.height],
-        "n_test": [test.height],
-        "category": [cfg.category],
-        "redundancy_threshold": [threshold],
-        "adversarial_r2": [score],
-        "is_adversarially_redundant": [bool(score is not None and score >= threshold)],
-    })
+    return pl.DataFrame(
+        {
+            "factor": [factor_name],
+            "n_train": [train.height],
+            "n_test": [test.height],
+            "category": [cfg.category],
+            "redundancy_threshold": [threshold],
+            "adversarial_r2": [score],
+            "is_adversarially_redundant": [
+                bool(score is not None and score >= threshold)
+            ],
+        }
+    )

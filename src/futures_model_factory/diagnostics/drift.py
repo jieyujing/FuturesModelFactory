@@ -24,15 +24,17 @@ def distribution_drift_summary(
         ref = _finite_array(reference.get_column(feature))
         cur = _finite_array(current.get_column(feature))
         if ref.size == 0 or cur.size == 0:
-            rows.append({
-                "feature": feature,
-                "psi": float("nan"),
-                "wasserstein": float("nan"),
-                "ks_stat": float("nan"),
-                "ks_pvalue": float("nan"),
-                "n_ref": int(ref.size),
-                "n_cur": int(cur.size),
-            })
+            rows.append(
+                {
+                    "feature": feature,
+                    "psi": float("nan"),
+                    "wasserstein": float("nan"),
+                    "ks_stat": float("nan"),
+                    "ks_pvalue": float("nan"),
+                    "n_ref": int(ref.size),
+                    "n_cur": int(cur.size),
+                }
+            )
             continue
         edges = _quantile_edges(ref, n_bins)
         ref_share = _histogram_share(ref, edges)
@@ -40,15 +42,17 @@ def distribution_drift_summary(
         psi = float(np.sum((cur_share - ref_share) * np.log(cur_share / ref_share)))
         ks = cast(Any, stats.ks_2samp(ref, cur))
         wasserstein = stats.wasserstein_distance(ref, cur)
-        rows.append({
-            "feature": feature,
-            "psi": psi,
-            "wasserstein": float(wasserstein),
-            "ks_stat": float(ks.statistic),
-            "ks_pvalue": float(ks.pvalue),
-            "n_ref": int(ref.size),
-            "n_cur": int(cur.size),
-        })
+        rows.append(
+            {
+                "feature": feature,
+                "psi": psi,
+                "wasserstein": float(wasserstein),
+                "ks_stat": float(ks.statistic),
+                "ks_pvalue": float(ks.pvalue),
+                "n_ref": int(ref.size),
+                "n_cur": int(cur.size),
+            }
+        )
     return pl.DataFrame(rows)
 
 
@@ -63,12 +67,20 @@ def drift_gate_summary(
         raise ValueError("at least one threshold is required")
     exprs = []
     if psi_threshold is not None:
-        exprs.append((pl.col("psi") > psi_threshold).fill_null(True).alias("psi_breach"))
+        exprs.append(
+            (pl.col("psi") > psi_threshold).fill_null(True).alias("psi_breach")
+        )
     if ks_threshold is not None:
-        exprs.append((pl.col("ks_stat") > ks_threshold).fill_null(True).alias("ks_breach"))
+        exprs.append(
+            (pl.col("ks_stat") > ks_threshold).fill_null(True).alias("ks_breach")
+        )
     gated = drift.with_columns(exprs)
-    breach_cols = [column for column in ("psi_breach", "ks_breach") if column in gated.columns]
-    return gated.with_columns(pl.any_horizontal([pl.col(column) for column in breach_cols]).alias("breach"))
+    breach_cols = [
+        column for column in ("psi_breach", "ks_breach") if column in gated.columns
+    ]
+    return gated.with_columns(
+        pl.any_horizontal([pl.col(column) for column in breach_cols]).alias("breach")
+    )
 
 
 def _finite_array(series: pl.Series) -> np.ndarray:

@@ -1,0 +1,21 @@
+name: "factor_volume_momentum"
+status: "candidate"
+hypothesis: "在高成交量伴随价格突破时，资金动量因子具有正向预测力。"
+mechanism_type: "trend_following"
+expected_sign: "1"
+inputs:
+  - "close_price"
+  - "volume"
+failure_conditions:
+  - { condition: "market_sideways", metric: "atr_ratio < 0.1" }
+  - { condition: "low_liquidity", metric: "daily_volume < 1000" }
+  - { condition: "high_correlation_with_index", metric: "beta_to_index > 1.2" }
+kill_conditions:
+  - "drawdown > 15%"
+search_context:
+  optimizer: "none"
+  sample_period: "2020-01-01 to 2023-12-31"
+deep_attribution:
+  market_structure_parent: "volume_climax"
+log_contrast_proxy:
+  reference_factor: "volume_ma20"

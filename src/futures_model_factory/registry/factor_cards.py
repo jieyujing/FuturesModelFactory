@@ -64,12 +64,16 @@ def load_factor_card(path: str | Path) -> FactorCard:
     if not isinstance(raw["deep_attribution"], dict):
         raise ValueError("factor card deep_attribution must be a mapping")
     if "market_structure_parent" not in raw["deep_attribution"]:
-        raise ValueError("factor card deep_attribution must declare market_structure_parent")
+        raise ValueError(
+            "factor card deep_attribution must declare market_structure_parent"
+        )
     if not isinstance(raw["log_contrast_proxy"], dict):
         raise ValueError("factor card log_contrast_proxy must be a mapping")
     status = str(raw.get("status", "candidate"))
     if status not in FACTOR_CARD_STATUSES:
-        raise ValueError(f"factor card status must be one of {sorted(FACTOR_CARD_STATUSES)}")
+        raise ValueError(
+            f"factor card status must be one of {sorted(FACTOR_CARD_STATUSES)}"
+        )
     return FactorCard(
         name=raw["name"],
         hypothesis=raw["hypothesis"],
@@ -86,15 +90,21 @@ def load_factor_card(path: str | Path) -> FactorCard:
         our_action=raw.get("our_action"),
         risk_we_take=raw.get("risk_we_take"),
         capacity_boundary=raw.get("capacity_boundary"),
-        observable_proxies=list(raw["observable_proxies"]) if "observable_proxies" in raw else None,
+        observable_proxies=list(raw["observable_proxies"])
+        if "observable_proxies" in raw
+        else None,
         deep_attribution=dict(raw["deep_attribution"]),
         log_contrast_proxy=dict(raw["log_contrast_proxy"]),
         implementation=dict(raw["implementation"]) if "implementation" in raw else None,
         data_granularity=raw.get("data_granularity"),
         mechanism_family=raw.get("mechanism_family"),
         signal_timestamp=raw.get("signal_timestamp"),
-        timing_contract=dict(raw["timing_contract"]) if "timing_contract" in raw else None,
-        calculation_contract=dict(raw["calculation_contract"]) if "calculation_contract" in raw else None,
+        timing_contract=dict(raw["timing_contract"])
+        if "timing_contract" in raw
+        else None,
+        calculation_contract=dict(raw["calculation_contract"])
+        if "calculation_contract" in raw
+        else None,
         status=status,
     )
 

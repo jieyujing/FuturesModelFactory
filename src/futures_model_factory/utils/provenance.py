@@ -27,7 +27,9 @@ def file_sha256(path: str | Path) -> str:
     return digest.hexdigest()
 
 
-def make_run_provenance(config_path: str | Path, data_paths: list[str | Path]) -> RunProvenance:
+def make_run_provenance(
+    config_path: str | Path, data_paths: list[str | Path]
+) -> RunProvenance:
     """Create a run ID and data snapshot ID from immutable input paths."""
     digest = hashlib.sha256()
     for path in sorted(Path(p) for p in data_paths):

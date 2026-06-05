@@ -10,6 +10,8 @@ dependencies = [
     "scipy",
     "pandas",
     "scikit-learn",
+    "clickhouse-connect>=1.1.1",
+    "pyarrow>=24.0.0",
 ]
 
 [tool.pytest.ini_options]

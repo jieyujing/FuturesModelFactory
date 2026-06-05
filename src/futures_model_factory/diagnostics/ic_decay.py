@@ -18,7 +18,9 @@ def information_coefficient_decay(
 
     rows: list[pl.DataFrame] = []
     for horizon_index, label_col in enumerate(label_cols, start=1):
-        ic = information_coefficient(factors, labels, factor_name=factor_name, label_col=label_col)
+        ic = information_coefficient(
+            factors, labels, factor_name=factor_name, label_col=label_col
+        )
         rows.append(
             ic.group_by("factor").agg(
                 pl.lit(label_col).alias("label_col"),
@@ -43,7 +45,9 @@ def ic_decay_summary(ic_decay: pl.DataFrame) -> pl.DataFrame:
         raise ValueError("ic_decay must contain factor, horizon_order, mean_rank_ic")
 
     by_factor = []
-    for factor, frame in ic_decay.sort("horizon_order").group_by("factor", maintain_order=True):
+    for factor, frame in ic_decay.sort("horizon_order").group_by(
+        "factor", maintain_order=True
+    ):
         values = frame.get_column("mean_rank_ic").to_list()
         abs_values = [abs(v) for v in values if v is not None]
         if len(abs_values) < 2:
@@ -53,15 +57,19 @@ def ic_decay_summary(ic_decay: pl.DataFrame) -> pl.DataFrame:
             first = abs_values[0]
             last = abs_values[-1]
             decay_ratio = None if first == 0 else last / first
-            monotone_decay = all(left >= right for left, right in zip(abs_values, abs_values[1:]))
+            monotone_decay = all(
+                left >= right for left, right in zip(abs_values, abs_values[1:])
+            )
         factor_name = factor[0] if isinstance(factor, tuple) else factor
-        by_factor.append({
-            "factor": factor_name,
-            "horizons": frame.height,
-            "first_abs_rank_ic": abs_values[0] if abs_values else None,
-            "last_abs_rank_ic": abs_values[-1] if abs_values else None,
-            "rank_ic_decay_ratio": decay_ratio,
-            "is_monotone_decay": monotone_decay,
-        })
+        by_factor.append(
+            {
+                "factor": factor_name,
+                "horizons": frame.height,
+                "first_abs_rank_ic": abs_values[0] if abs_values else None,
+                "last_abs_rank_ic": abs_values[-1] if abs_values else None,
+                "rank_ic_decay_ratio": decay_ratio,
+                "is_monotone_decay": monotone_decay,
+            }
+        )
 
     return pl.DataFrame(by_factor)

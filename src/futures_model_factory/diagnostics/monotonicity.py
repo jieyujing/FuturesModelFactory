@@ -8,11 +8,15 @@ from scipy.stats import spearmanr  # type: ignore[import-untyped]
 Direction = Literal["positive", "negative"]
 
 
-def monotonicity_by_date(bucket_returns: pl.DataFrame, *, direction: Direction = "positive") -> pl.DataFrame:
+def monotonicity_by_date(
+    bucket_returns: pl.DataFrame, *, direction: Direction = "positive"
+) -> pl.DataFrame:
     """Score whether bucket returns move monotonically with factor rank by date."""
     required = {"date", "factor", "bucket", "mean_forward_return"}
     if not required.issubset(bucket_returns.columns):
-        raise ValueError("bucket_returns must contain date, factor, bucket, mean_forward_return")
+        raise ValueError(
+            "bucket_returns must contain date, factor, bucket, mean_forward_return"
+        )
     if direction not in {"positive", "negative"}:
         raise ValueError("direction must be positive or negative")
 
@@ -43,16 +47,18 @@ def monotonicity_by_date(bucket_returns: pl.DataFrame, *, direction: Direction =
                 rho = None if rho is None else -rho
             violation_count = int(violations)
             monotone_ratio = 1.0 - violation_count / len(diffs)
-        rows.append({
-            "date": date,
-            "factor": factor,
-            "direction": direction,
-            "bucket_count": len(buckets),
-            "monotonicity_rank_corr": rho,
-            "violation_count": violation_count,
-            "monotone_step_ratio": monotone_ratio,
-            "top_bottom_spread": top_bottom_spread,
-        })
+        rows.append(
+            {
+                "date": date,
+                "factor": factor,
+                "direction": direction,
+                "bucket_count": len(buckets),
+                "monotonicity_rank_corr": rho,
+                "violation_count": violation_count,
+                "monotone_step_ratio": monotone_ratio,
+                "top_bottom_spread": top_bottom_spread,
+            }
+        )
 
     return pl.DataFrame(rows).sort(["factor", "date"])
 
