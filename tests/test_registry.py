@@ -82,4 +82,3 @@ def test_load_subsystem_cards_batch(temp_registry: Path) -> None:
     subsystems = load_subsystem_cards(subsystems_dir)
     assert len(subsystems) == 1
     assert subsystems[0].subsystem_id == "subsystem_ok"
-

@@ -47,7 +47,9 @@ log_contrast_proxy:
         # 所以即使这里含有 < 或 >，也不会触发类似 subsystem_cards.py 里的占位符报错。
         # 但为了避免未来的隐患，我们将 atr_ratio < 0.1 改为 atr_ratio_below_0_1。
         # daily_volume < 1000 改为 daily_volume_below_1000 以彻底规避 placeholder 检测误判。
-        (factors_dir / "factor_volume_momentum.yaml").write_text(factor_ok, encoding="utf-8")
+        (factors_dir / "factor_volume_momentum.yaml").write_text(
+            factor_ok, encoding="utf-8"
+        )
 
         # 2. 写入一个不合规的因子卡片 (缺失必填项，如 deep_attribution)
         factor_bad = """
@@ -165,7 +167,9 @@ output_signals:
 audit:
   lifecycle_stage: "draft"
 """
-        (subsystems_dir / "subsystem_ok.yaml").write_text(subsystem_ok, encoding="utf-8")
+        (subsystems_dir / "subsystem_ok.yaml").write_text(
+            subsystem_ok, encoding="utf-8"
+        )
 
         yield path
 

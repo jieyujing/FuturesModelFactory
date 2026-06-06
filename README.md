@@ -164,3 +164,42 @@ print(summary)
   ```bash
   uv run pytest
   ```
+
+---
+
+## ClickHouse 数据库集成与查看方式
+
+框架提供了将本地分钟线数据导入 ClickHouse 并建立快速检索索引的能力。
+
+### 1. 批量数据清洗与导入
+数据导入脚本支持**双通道自适应寻址**。在局域网内会自动通过 `192.168.100.99:8123` 极速入库，若不在局域网内则自动在 3 秒后安全降级至配置文件中的公网域名连接。
+执行全量导入（自动清洗非标后缀为官方标准、自动将 IF 股指期货拉入，并自动刷新索引）：
+
+```bash
+# 执行全量导入 (需指定本地数据 ZIP 包目录)
+PYTHONPATH=src uv run python scripts/import_futures_1m.py --zip-path /Users/link/Downloads/data
+```
+
+### 2. 数据库内容简介与元数据审查
+为了避免全表扫描大表，请直接查询元数据索引表 `default.futures_1m_bar_index`（毫秒级响应）。
+
+* **查询全局品种简介**（查看各品种的合约数、总行数和历史时间跨度）：
+  ```sql
+  SELECT 
+      substring(code, 1, 2) AS prefix, 
+      count() AS contract_count, 
+      sum(total_rows) AS total_rows, 
+      min(min_datetime) AS min_dt, 
+      max(max_datetime) AS max_dt 
+  FROM default.futures_1m_bar_index 
+  GROUP BY prefix 
+  ORDER BY prefix;
+  ```
+
+* **查询具体某个品种下（如 AL 铝期货）所有明细合约的覆盖范围**：
+  ```sql
+  SELECT code, min_datetime, max_datetime, total_rows 
+  FROM default.futures_1m_bar_index 
+  WHERE code LIKE 'AL%' 
+  ORDER BY code;
+  ```
